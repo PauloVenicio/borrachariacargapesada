@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Nota de Serviço - Borracharia</title>
+<link rel="stylesheet" href="style.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<div class="container">
+
+<img src="img/logo.png" class="logo">
+
+<h2>BORRACHARIA CARGA PESADA</h2>
+<p>CNPJ: 20.620.426/0001-55</p>
+<p>Rua Deputado José Resende, 654 - Volta Redonda</p>
+<p>Fone: (99) 98160-7767</p>
+
+<hr>
+
+<h3>Nota de Serviço</h3>
+
+<p><strong>Nº da Nota:</strong> <span id="numeroNota"></span></p>
+<p><strong>Data:</strong> <span id="dataAtual"></span></p>
+
+<input type="text" id="cliente" class="campo-cliente" placeholder="Nome do cliente">
+
+<hr>
+
+<div class="form no-print">
+<input type="text" id="produto" placeholder="Produto / Serviço">
+<input type="text" id="placa" placeholder="Placa">
+<input type="number" id="valor" placeholder="Valor">
+<button type="button" onclick="adicionarItem()">Adicionar</button>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>Produto</th>
+<th>Placa</th>
+<th>Valor</th>
+<th class="no-print">Ação</th>
+</tr>
+</thead>
+<tbody id="tabelaItens"></tbody>
+</table>
+
+<h3>Total: R$ <span id="total">0.00</span></h3>
+
+<div class="no-print botoes">
+<button type="button" onclick="gerarPDF()">Salvar PDF</button>
+<button type="button" onclick="imprimirNota()">Imprimir</button>
+<button type="button" onclick="enviarWhatsApp()">Enviar WhatsApp</button>
+<button type="button" onclick="toggleTema()">🌙 Tema</button>
+<button type="button" onclick="salvarHistorico()">Salvar Histórico</button>
+</div>
+
+<hr>
+
+<div class="no-print">
+<h3>📚 Histórico</h3>
+<ul id="historico"></ul>
+</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>

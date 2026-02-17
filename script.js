@@ -114,7 +114,7 @@ function enviarWhatsApp() {
     mensagem += `Nota: ${nota}\n`;
     mensagem += `Total: R$ ${total}`;
 
-    const telefone = "5599999999999"; // TROQUE para o número da borracharia
+    const telefone = "5599984272875"; // TROQUE para o número da borracharia
 
     const url = `https://wa.me/${telefone}?text=${encodeURIComponent(mensagem)}`;
     window.open(url, "_blank");
@@ -165,3 +165,4 @@ if (localStorage.getItem("tema") === "dark") {
 
 // ===== CARREGAR HISTÓRICO AO ABRIR =====
 mostrarHistorico();
+

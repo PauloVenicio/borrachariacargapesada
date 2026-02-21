@@ -34,11 +34,18 @@ document.getElementById("dataAtual").innerText = new Date().toLocaleDateString("
 
 // Número da nota automático
 document.getElementById("numeroNota").innerText = numeroNota;
+const campoPlaca = document.getElementById("placa");
+
+if (campoPlaca) {
+    campoPlaca.addEventListener("input", event => {
+        event.target.value = event.target.value.toUpperCase();
+    });
+}
 
 // ===== ADICIONAR ITEM =====
 function adicionarItem() {
     const produto = document.getElementById("produto").value;
-    const placa = document.getElementById("placa").value;
+    const placa = document.getElementById("placa").value.toUpperCase().trim();
     const valor = document.getElementById("valor").value;
 
     if (produto === "" || placa === "" || valor === "") {
@@ -299,3 +306,6 @@ if (localStorage.getItem("tema") === "dark") {
 
 // ===== CARREGAR HISTÓRICO AO ABRIR =====
 mostrarHistorico();
+
+
+

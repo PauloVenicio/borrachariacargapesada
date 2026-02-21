@@ -1,5 +1,33 @@
 let itens = [];
 let numeroNota = localStorage.getItem("numeroNota") || 1;
+let pdfEmProcessamento = false;
+
+function obterOpcoesPDF(nomeArquivo, removerLogo = false) {
+    const executandoEmArquivoLocal = window.location.protocol === "file:";
+
+    return {
+        margin: 8,
+        filename: nomeArquivo,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: {
+            scale: 2,
+            useCORS: !executandoEmArquivoLocal,
+            allowTaint: false,
+            logging: false,
+            onclone: doc => {
+                doc.querySelectorAll(".no-print").forEach(el => {
+                    el.style.display = "none";
+                });
+
+                if (removerLogo && executandoEmArquivoLocal) {
+                    // Em file:// imagens locais podem contaminar o canvas e bloquear toDataURL.
+                    doc.querySelectorAll(".logo").forEach(el => el.remove());
+                }
+            }
+        },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+    };
+}
 
 // Data automática
 document.getElementById("dataAtual").innerText = new Date().toLocaleDateString("pt-BR");
@@ -81,10 +109,19 @@ function gerarPDF() {
     salvarHistorico();
 
     const elemento = document.querySelector(".container");
+    const notaAtual = numeroNota;
 
     html2pdf()
+        .set(obterOpcoesPDF(`Nota_${notaAtual}.pdf`))
         .from(elemento)
-        .save(`Nota_${numeroNota}.pdf`);
+        .save()
+        .catch(() => {
+            // Fallback para ambiente local com restriÃ§Ã£o de canvas.
+            return html2pdf()
+                .set(obterOpcoesPDF(`Nota_${notaAtual}.pdf`, true))
+                .from(elemento)
+                .save();
+        });
 
     numeroNota++;
     localStorage.setItem("numeroNota", numeroNota);
@@ -92,6 +129,31 @@ function gerarPDF() {
 
     itens = [];
     atualizarTabela();
+}
+
+// ===== GERAR PDF (PROMISE) =====
+function gerarPDFAsync() {
+    if (itens.length === 0) {
+        alert("Adicione pelo menos um item!");
+        return null;
+    }
+
+    const elemento = document.querySelector(".container");
+    const notaAtual = numeroNota;
+
+    return html2pdf()
+        .set(obterOpcoesPDF(`Nota_${notaAtual}.pdf`))
+        .from(elemento)
+        .outputPdf("blob")
+        .then(blob => ({ blob, notaAtual }))
+        .catch(() => {
+            // Fallback para ambiente local com restriÃ§Ã£o de canvas.
+            return html2pdf()
+                .set(obterOpcoesPDF(`Nota_${notaAtual}.pdf`, true))
+                .from(elemento)
+                .outputPdf("blob")
+                .then(blob => ({ blob, notaAtual }));
+        });
 }
 
 // ===== IMPRIMIR =====
@@ -118,6 +180,78 @@ function enviarWhatsApp() {
 
     const url = `https://wa.me/${telefone}?text=${encodeURIComponent(mensagem)}`;
     window.open(url, "_blank");
+}
+
+// ===== PDF + WHATSAPP =====
+async function enviarPDFWhatsApp() {
+    if (pdfEmProcessamento) {
+        return;
+    }
+
+    const cliente = document.getElementById("cliente").value.trim();
+    const total = document.getElementById("total").innerText;
+    const telefone = "5599984272875";
+
+    if (!cliente) {
+        alert("Informe o nome do cliente!");
+        return;
+    }
+
+    if (itens.length === 0) {
+        alert("Adicione pelo menos um item!");
+        return;
+    }
+
+    pdfEmProcessamento = true;
+
+    try {
+        const resultado = await gerarPDFAsync();
+        if (!resultado) {
+            return;
+        }
+
+        const { blob, notaAtual } = resultado;
+        const nomeArquivo = `Nota_${notaAtual}.pdf`;
+        const mensagem = `Olá ${cliente}! Segue sua nota de serviço.\nNota: ${notaAtual}\nTotal: R$ ${total}`;
+
+        const arquivo = new File([blob], nomeArquivo, { type: "application/pdf" });
+        const podeCompartilharArquivo =
+            navigator.share &&
+            navigator.canShare &&
+            navigator.canShare({ files: [arquivo] });
+
+        if (podeCompartilharArquivo) {
+            await navigator.share({
+                title: `Nota ${notaAtual}`,
+                text: mensagem,
+                files: [arquivo]
+            });
+        } else {
+            const linkBlob = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = linkBlob;
+            a.download = nomeArquivo;
+            a.click();
+            URL.revokeObjectURL(linkBlob);
+
+            const urlWhats = `https://wa.me/${telefone}?text=${encodeURIComponent(
+                `${mensagem}\n\nPDF salvo no seu aparelho. Anexe o arquivo ${nomeArquivo} no WhatsApp para finalizar o envio.`
+            )}`;
+            window.open(urlWhats, "_blank");
+        }
+
+        salvarHistorico();
+        numeroNota++;
+        localStorage.setItem("numeroNota", numeroNota);
+        document.getElementById("numeroNota").innerText = numeroNota;
+        itens = [];
+        atualizarTabela();
+    } catch (erro) {
+        alert("Não foi possível gerar/compartilhar o PDF agora.");
+        console.error(erro);
+    } finally {
+        pdfEmProcessamento = false;
+    }
 }
 
 // ===== HISTÓRICO =====
@@ -165,4 +299,3 @@ if (localStorage.getItem("tema") === "dark") {
 
 // ===== CARREGAR HISTÓRICO AO ABRIR =====
 mostrarHistorico();
-
